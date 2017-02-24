@@ -1,3 +1,4 @@
+from sqlalchemy import Boolean
 from sqlalchemy import Column, String, Integer, DateTime, Float, Table
 from sqlalchemy import ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
@@ -41,6 +42,9 @@ class Subject(Base):
     directors = relationship('Celebrity', secondary=director_subject, back_populates='directed', lazy='subquery')
     screenwriters = relationship('Celebrity', secondary=screenwriter_subject, back_populates='wrote', lazy='subquery')
 
+    def __repr__(self):
+        return '(Subject: %d, %s)' % (self.id, self.title)
+
 
 class Celebrity(Base):
 
@@ -57,3 +61,31 @@ class Celebrity(Base):
     starred = relationship('Subject', secondary=actor_subject, back_populates='actors', lazy='subquery')
     directed = relationship('Subject', secondary=director_subject, back_populates='directors', lazy='subquery')
     wrote = relationship('Subject', secondary=screenwriter_subject, back_populates='screenwriters', lazy='subquery')
+
+    def __repr__(self):
+        return '(Celebrity: %d, %s)' % (self.id, self.name)
+
+
+class YearTag(Base):
+
+    __tablename__ = 'year_tag'
+
+    id = Column(Integer, primary_key=True)
+    year = Column(String(255))
+    page = Column(Integer)
+    isScanned = Column(Boolean)
+
+    def __repr__(self):
+        return '(YearTag: %d, %s)' % (self.id, self.year)
+
+
+class Task(Base):
+
+    __tablename__ = 'task'
+
+    id = Column(Integer, primary_key=True)
+    url = Column(String(2000))
+    isScanned = Column(Boolean)
+
+    def __repr__(self):
+        return '(Task: %d, %s)' % (self.id, self.url)
