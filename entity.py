@@ -1,5 +1,5 @@
 from sqlalchemy import Boolean
-from sqlalchemy import Column, String, Integer, DateTime, Float, Table
+from sqlalchemy import Column, String, Integer, Float, Table
 from sqlalchemy import ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -31,12 +31,14 @@ class Subject(Base):
     type = Column(String(255))
     product_nation = Column(String(255))
     language = Column(String(255))
-    premiere = Column(DateTime(timezone=False))
+    premiere = Column(String(2000))
     duration = Column(Float)
     rating_num = Column(Float)
     rating_people = Column(Integer)
     periods = Column(Integer)
     period_duration = Column(Float)
+    photo = Column(String(2000))
+    year = Column(String(255))
 
     actors = relationship('Celebrity', secondary=actor_subject, back_populates='starred', lazy='subquery')
     directors = relationship('Celebrity', secondary=director_subject, back_populates='directed', lazy='subquery')
@@ -52,11 +54,13 @@ class Celebrity(Base):
 
     id = Column(Integer, primary_key=True)
     zodiac = Column(String(255))
-    birthday = Column(DateTime(timezone=False))
+    birthday = Column(String(255))
     birthplace = Column(String(255))
     profession = Column(String(255))
     for_lang_names = Column(String(2000))
     name = Column(String(2000))
+    photo = Column(String(2000))
+    gender = Column(String(255))
 
     starred = relationship('Subject', secondary=actor_subject, back_populates='actors', lazy='subquery')
     directed = relationship('Subject', secondary=director_subject, back_populates='directors', lazy='subquery')

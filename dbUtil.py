@@ -7,5 +7,5 @@ host = 'localhost'
 port = '3306'
 schema = 'douban'
 engine = create_engine("mysql+mysqlconnector://%s:%s@%s:%s/%s" % (username, password, host, port, schema))
-DBSession = sessionmaker(bind=engine)
+DBSession = sessionmaker(bind=engine, expire_on_commit=False)
 

@@ -1,17 +1,123 @@
 from dbUtil import DBSession
-from entity import YearTag, Task
-from httpUtil import get_html
+from entity import YearTag, Task, Celebrity, Subject
+from httpUtil import get_html, get_inner_text, get_tail, get_attr, bea_celebrity_info
 from sfdblog import logger
+
+
+def get_or_create_celebrity(c_id):
+    session = DBSession()
+    celebrity = session.query(Celebrity).filter(Celebrity.id == c_id).first()
+    if celebrity is None:
+        celebrity = built_celebrity_by_id(c_id)
+        session.add(celebrity)
+    session.commit()
+    session.close()
+    return celebrity
+
+
+def built_celebrity_by_id(c_id):
+    try:
+        url = "https://movie.douban.com/celebrity/%s/" % c_id
+        html = get_html(url)
+        return Celebrity(
+            id=c_id,
+            zodiac=bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="星座"]')),
+            birthday=bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="出生日期"]')),
+            birthplace=bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="出生地"]')),
+            profession=bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="职业"]')),
+            for_lang_names=bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="更多外文名"]')),
+            name=get_inner_text(html, '//div[@id="content"]/h1/text()'),
+            photo=get_attr(html, '//div[@id="headline"]/div[@class="pic"]//img/@src'),
+            gender=bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="性别"]'))
+        )
+    except Exception as e:
+        logger.exception("get_celebrity_by_id has exception:")
+        logger.exception(e)
+        logger.exception("get_celebrity_by_id has exception:c_id:")
+        logger.exception(c_id)
+        raise
+    # logger.info("星座：" +
+    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="星座"]')))
+    # logger.info("出生日期：" +
+    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="出生日期"]')))
+    # logger.info("出生地：" +
+    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="出生地"]')))
+    # logger.info("职业：" +
+    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="职业"]')))
+    # logger.info("更多外文名：" +
+    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="更多外文名"]')))
+    # logger.info("名字：" +
+    #             get_inner_text(html, '//div[@id="content"]/h1/text()'))
+    # logger.info("性别：" +
+    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="性别"]')))
+    # logger.info("图片：" +
+    #             get_attr(html, '//div[@id="headline"]/div[@class="pic"]//img/@src'))
+
+
+def task_to_subject(task):
+    session = DBSession()
+    year_task_in_session = session.query(Task).filter(Task.id == task.id).first()
+    year_task_in_session.isScanned = True
+    session.commit()
+
+    html = get_html(task.url)
+    subject = Subject(
+        id=task.url.split("/")[-2],
+        title=get_inner_text(html, '//span[@property="v:itemreviewed"]/text()'),
+        type="/".join(html.xpath('//span[@property="v:genre"]/text()')),
+        product_nation=get_tail(html, '//span[@class="pl"][text()="制片国家/地区:"]'),
+        language=get_tail(html, '//span[@class="pl"][text()="语言:"]'),
+        premiere="/".join(html.xpath('//span[@property="v:initialReleaseDate"]/text()')),
+        duration=get_attr(html, '//span[@property="v:runtime"]/@content'),
+        rating_num=get_inner_text(html, '//strong[@property="v:average"]/text()'),
+        rating_people=get_inner_text(html, '//span[@property="v:votes"]/text()'),
+        periods=get_tail(html, '//span[@class="pl"][text()="集数:"]'),
+        period_duration=get_tail(html, '//span[@class="pl"][text()="单集片长:"]'),
+        photo=get_attr(html, '//img[@rel="v:image"][@title="点击看更多海报"]/@src'),
+        year=get_inner_text(html, '//span[@class="year"]/text()').replace("(", "").replace(")", "")
+    )
+    # logger.info("标题：" + get_inner_text(html, '//span[@property="v:itemreviewed"]/text()'))
+    # logger.info("评分：" + get_inner_text(html, '//strong[@property="v:average"]/text()'))
+    # logger.info("评价人数：" + get_inner_text(html, '//span[@property="v:votes"]/text()'))
+    # logger.info("类型：" + "/".join(html.xpath('//span[@property="v:genre"]/text()')))
+    # logger.info("制片国家/地区：" + get_tail(html, '//span[@class="pl"][text()="制片国家/地区:"]'))
+    # logger.info("语言:" + get_tail(html, '//span[@class="pl"][text()="语言:"]'))
+    # logger.info("年份:" + get_inner_text(html, '//span[@class="year"]/text()').replace("(", "").replace(")", ""))
+    # logger.info("上映时间：" + "/".join(html.xpath('//span[@property="v:initialReleaseDate"]/text()')))
+    # logger.info("片长:" + get_attr(html, '//span[@property="v:runtime"]/@content'))
+    # logger.info("海报:" + get_attr(html, '//img[@rel="v:image"][@title="点击看更多海报"]/@src'))
+    # logger.info("集数：" + get_tail(html, '//span[@class="pl"][text()="集数:"]'))
+    # logger.info("单集片长:" + get_tail(html, '//span[@class="pl"][text()="单集片长:"]'))
+
+    session.add(subject)
+    session.commit()
+    for href in html.xpath('//a[@rel="v:directedBy"]/@href'):
+        get_or_create_celebrity(str(href).split("/")[-2])
+        subject.directors.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
+        session.commit()
+
+    for href in html.xpath('//a[@rel="v:starring"]/@href'):
+        get_or_create_celebrity(str(href).split("/")[-2])
+        subject.actors.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
+        session.commit()
+
+    for href in html.xpath('//span[@class="pl"][text()="编剧"]')[0].getnext().xpath('a/@href'):
+        get_or_create_celebrity(str(href).split("/")[-2])
+        subject.screenwriters.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
+        session.commit()
+
+    session.close()
 
 
 def built_tasks_by_url(url):
     try:
         session = DBSession()
         html = get_html(url)
-        logger.debug(html)
         subjects = html.xpath('//tr[@class="item"]/td/a[@class="nbg"]/@href')
         for subject in subjects:
-            task = Task(url=url, isScanned=False)
+            if session.query(Task).filter(Task.url == url).first() is not None:
+                pass
+            task = Task(url=str(subject), isScanned=False)
             session.add(task)
             session.commit()
     except Exception as e:
@@ -19,6 +125,7 @@ def built_tasks_by_url(url):
         logger.exception(e)
         logger.exception("built_tasks_by_tag has exception:url:")
         logger.exception(url)
+        raise
     finally:
         session.close()
 
@@ -57,6 +164,14 @@ def built_all_tasks():
 
 
 def main():
-    built_all_tasks()
+    # built_all_tasks()
+    session = DBSession()
+    task = Task(url="https://movie.douban.com/subject/25921812/", isScanned=False)
+    session.add(task)
+    session.commit()
+    session.close()
+    task_to_subject(task)
+    # session.add(built_celebrity_by_id("1363486"))
+    # session.commit()
 if __name__ == "__main__":
     main()
