@@ -7,7 +7,17 @@ from lxml import etree
 
 def get_html(url):
     sleep(2)
-    html = get(url).content
+    # proxies = {
+    #     'http': 'http://77.73.66.26:8080',
+    #     'https': 'http://77.73.66.26:8080'
+    # }
+    headers = {
+        'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+            'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36'
+    }
+    html = get(url,  headers=headers).content
+    print(html)
     return etree.HTML(html.decode('utf-8'))
 
 

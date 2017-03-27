@@ -4,15 +4,21 @@ from httpUtil import get_html, get_inner_text, get_tail, get_attr, bea_celebrity
 from sfdblog import logger
 
 
+# 根据id获得影人（若该id数据库内不存在则创建该影人）
 def get_or_create_celebrity(c_id):
-    session = DBSession()
-    celebrity = session.query(Celebrity).filter(Celebrity.id == c_id).first()
-    if celebrity is None:
-        celebrity = built_celebrity_by_id(c_id)
-        session.add(celebrity)
-    session.commit()
-    session.close()
-    return celebrity
+    try:
+        session = DBSession()
+        celebrity = session.query(Celebrity).filter(Celebrity.id == c_id).first()
+        if celebrity is None:
+            celebrity = built_celebrity_by_id(c_id)
+            session.add(celebrity)
+        session.commit()
+        return celebrity
+    except Exception as e:
+        logger.exception("get_or_create_celebrity has exception:c_id:"+c_id)
+        raise
+    finally:
+        session.close()
 
 
 def built_celebrity_by_id(c_id):
@@ -31,10 +37,7 @@ def built_celebrity_by_id(c_id):
             gender=bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="性别"]'))
         )
     except Exception as e:
-        logger.exception("get_celebrity_by_id has exception:")
-        logger.exception(e)
-        logger.exception("get_celebrity_by_id has exception:c_id:")
-        logger.exception(c_id)
+        logger.exception("built_celebrity_by_id has exception:c_id:"+c_id)
         raise
     # logger.info("星座：" +
     #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="星座"]')))
@@ -55,27 +58,31 @@ def built_celebrity_by_id(c_id):
 
 
 def task_to_subject(task):
-    session = DBSession()
-    year_task_in_session = session.query(Task).filter(Task.id == task.id).first()
-    year_task_in_session.isScanned = True
-    session.commit()
+    try:
+        session = DBSession()
+        year_task_in_session = session.query(Task).filter(Task.id == task.id).first()
+        if session.query(Subject).filter(Subject.id == task.url.split("/")[-2]).first() is not None:
+            session.close()
+            return
+        year_task_in_session.isScanned = True
+        session.commit()
 
-    html = get_html(task.url)
-    subject = Subject(
-        id=task.url.split("/")[-2],
-        title=get_inner_text(html, '//span[@property="v:itemreviewed"]/text()'),
-        type="/".join(html.xpath('//span[@property="v:genre"]/text()')),
-        product_nation=get_tail(html, '//span[@class="pl"][text()="制片国家/地区:"]'),
-        language=get_tail(html, '//span[@class="pl"][text()="语言:"]'),
-        premiere="/".join(html.xpath('//span[@property="v:initialReleaseDate"]/text()')),
-        duration=get_attr(html, '//span[@property="v:runtime"]/@content'),
-        rating_num=get_inner_text(html, '//strong[@property="v:average"]/text()'),
-        rating_people=get_inner_text(html, '//span[@property="v:votes"]/text()'),
-        periods=get_tail(html, '//span[@class="pl"][text()="集数:"]'),
-        period_duration=get_tail(html, '//span[@class="pl"][text()="单集片长:"]'),
-        photo=get_attr(html, '//img[@rel="v:image"][@title="点击看更多海报"]/@src'),
-        year=get_inner_text(html, '//span[@class="year"]/text()').replace("(", "").replace(")", "")
-    )
+        html = get_html(task.url)
+        subject = Subject(
+            id=task.url.split("/")[-2],
+            title=get_inner_text(html, '//span[@property="v:itemreviewed"]/text()'),
+            type="/".join(html.xpath('//span[@property="v:genre"]/text()')),
+            product_nation=get_tail(html, '//span[@class="pl"][text()="制片国家/地区:"]'),
+            language=get_tail(html, '//span[@class="pl"][text()="语言:"]'),
+            premiere="/".join(html.xpath('//span[@property="v:initialReleaseDate"]/text()')),
+            duration=get_attr(html, '//span[@property="v:runtime"]/@content'),
+            rating_num=get_inner_text(html, '//strong[@property="v:average"]/text()'),
+            rating_people=get_inner_text(html, '//span[@property="v:votes"]/text()'),
+            periods=get_tail(html, '//span[@class="pl"][text()="集数:"]'),
+            period_duration=get_tail(html, '//span[@class="pl"][text()="单集片长:"]'),
+            photo=get_attr(html, '//img[@rel="v:image"][@title="点击看更多海报"]/@src'),
+            year=get_inner_text(html, '//span[@class="year"]/text()').replace("(", "").replace(")", "")
+        )
     # logger.info("标题：" + get_inner_text(html, '//span[@property="v:itemreviewed"]/text()'))
     # logger.info("评分：" + get_inner_text(html, '//strong[@property="v:average"]/text()'))
     # logger.info("评价人数：" + get_inner_text(html, '//span[@property="v:votes"]/text()'))
@@ -89,24 +96,29 @@ def task_to_subject(task):
     # logger.info("集数：" + get_tail(html, '//span[@class="pl"][text()="集数:"]'))
     # logger.info("单集片长:" + get_tail(html, '//span[@class="pl"][text()="单集片长:"]'))
 
-    session.add(subject)
-    session.commit()
-    for href in html.xpath('//a[@rel="v:directedBy"]/@href'):
-        get_or_create_celebrity(str(href).split("/")[-2])
-        subject.directors.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
+        session.add(subject)
         session.commit()
+        for href in html.xpath('//a[@rel="v:directedBy"]/@href'):
+            get_or_create_celebrity(str(href).split("/")[-2])
+            subject.directors.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
+            session.commit()
 
-    for href in html.xpath('//a[@rel="v:starring"]/@href'):
-        get_or_create_celebrity(str(href).split("/")[-2])
-        subject.actors.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
+        for href in html.xpath('//a[@rel="v:starring"]/@href'):
+            get_or_create_celebrity(str(href).split("/")[-2])
+            subject.actors.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
+            session.commit()
+
+        for href in html.xpath('//span[@class="pl"][text()="编剧"]')[0].getnext().xpath('a/@href'):
+            get_or_create_celebrity(str(href).split("/")[-2])
+            subject.screenwriters.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
+            session.commit()
+
+        session.close()
+    except Exception as e:
+        logger.exception("task_to_subject has exception:task:"+task.url)
+
+        year_task_in_session.isScanned = False
         session.commit()
-
-    for href in html.xpath('//span[@class="pl"][text()="编剧"]')[0].getnext().xpath('a/@href'):
-        get_or_create_celebrity(str(href).split("/")[-2])
-        subject.screenwriters.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
-        session.commit()
-
-    session.close()
 
 
 def built_tasks_by_url(url):
@@ -121,10 +133,7 @@ def built_tasks_by_url(url):
             session.add(task)
             session.commit()
     except Exception as e:
-        logger.exception("built_tasks_by_tag has exception:")
-        logger.exception(e)
-        logger.exception("built_tasks_by_tag has exception:url:")
-        logger.exception(url)
+        logger.exception("built_tasks_by_url has exception:url:"+url)
         raise
     finally:
         session.close()
@@ -145,10 +154,7 @@ def built_tasks_by_tag(year_tag):
             year_tag_in_session.page = x
             session.commit()
     except Exception as e:
-        logger.exception("built_tasks_by_tag has exception:")
-        logger.exception(e)
-        logger.exception("built_tasks_by_tag has exception:year_tag:")
-        logger.exception(year_tag)
+        logger.exception("built_tasks_by_tag has exception:year_tag:"+year_tag.year)
 
         year_tag_in_session.isScanned = False
         session.commit()
@@ -165,13 +171,14 @@ def built_all_tasks():
 
 def main():
     # built_all_tasks()
-    session = DBSession()
-    task = Task(url="https://movie.douban.com/subject/25921812/", isScanned=False)
-    session.add(task)
-    session.commit()
-    session.close()
-    task_to_subject(task)
+    # session = DBSession()
+    # task = Task(url="https://movie.douban.com/subject/25921812/", isScanned=False)
+    # session.add(task)
+    # session.commit()
+    # session.close()
+    # task_to_subject(task)
     # session.add(built_celebrity_by_id("1363486"))
     # session.commit()
+    built_all_tasks()
 if __name__ == "__main__":
     main()

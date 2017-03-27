@@ -49,11 +49,13 @@ DROP TABLE IF EXISTS `celebrity`;
 CREATE TABLE `celebrity` (
   `id` int(11) NOT NULL,
   `zodiac` varchar(255) DEFAULT NULL,
-  `birthday` date DEFAULT NULL,
+  `birthday` varchar(255) DEFAULT NULL,
   `birthplace` varchar(255) DEFAULT NULL,
   `profession` varchar(255) DEFAULT NULL,
   `for_lang_names` varchar(2000) DEFAULT NULL,
   `name` varchar(2000) DEFAULT NULL,
+  `photo` varchar(2000) DEFAULT NULL,
+  `gender` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -124,12 +126,14 @@ CREATE TABLE `subject` (
   `type` varchar(255) DEFAULT NULL,
   `product_nation` varchar(255) DEFAULT NULL,
   `language` varchar(255) DEFAULT NULL,
-  `premiere` date DEFAULT NULL,
-  `duraction` double DEFAULT NULL,
-  `rating_num` double DEFAULT NULL,
+  `premiere` varchar(2000) DEFAULT NULL,
+  `duration` float DEFAULT NULL,
+  `rating_num` float DEFAULT NULL,
   `rating_people` int(11) DEFAULT NULL,
   `periods` int(11) DEFAULT NULL,
-  `period_duration` double DEFAULT NULL,
+  `period_duration` float DEFAULT NULL,
+  `photo` varchar(2000) DEFAULT NULL,
+  `year` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -142,6 +146,55 @@ LOCK TABLES `subject` WRITE;
 /*!40000 ALTER TABLE `subject` DISABLE KEYS */;
 /*!40000 ALTER TABLE `subject` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `task`
+--
+
+DROP TABLE IF EXISTS `task`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `task` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `url` varchar(2000) DEFAULT NULL,
+  `isScanned` tinyint(4) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `task`
+--
+
+LOCK TABLES `task` WRITE;
+/*!40000 ALTER TABLE `task` DISABLE KEYS */;
+/*!40000 ALTER TABLE `task` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `year_tag`
+--
+
+DROP TABLE IF EXISTS `year_tag`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `year_tag` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `year` varchar(2000) DEFAULT NULL,
+  `page` int(11) DEFAULT NULL,
+  `isScanned` tinyint(4) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `year_tag`
+--
+
+LOCK TABLES `year_tag` WRITE;
+/*!40000 ALTER TABLE `year_tag` DISABLE KEYS */;
+/*!40000 ALTER TABLE `year_tag` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -152,4 +205,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-02-23 19:29:40
+-- Dump completed on 2017-03-27 21:31:08
