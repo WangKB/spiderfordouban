@@ -180,5 +180,8 @@ def main():
     # session.add(built_celebrity_by_id("1363486"))
     # session.commit()
     built_all_tasks()
+    # for x in range(1890 , 2020):
+    #     print("INSERT INTO `douban`.`year_tag`(`year`,`page`,`isScanned`)VALUES(%d,0,0);" % x)
+
 if __name__ == "__main__":
     main()
