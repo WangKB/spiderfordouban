@@ -169,6 +169,13 @@ def built_all_tasks():
     session.close()
 
 
+def built_all_subjects():
+    session = DBSession()
+    for task in session.query(Task).filter(Task.isScanned.is_(False)).all():
+        task_to_subject(task)
+    session.close()
+
+
 def main():
     # built_all_tasks()
     # session = DBSession()
@@ -179,7 +186,7 @@ def main():
     # task_to_subject(task)
     # session.add(built_celebrity_by_id("1363486"))
     # session.commit()
-    built_all_tasks()
+    built_all_subjects()
     # for x in range(1890 , 2020):
     #     print("INSERT INTO `douban`.`year_tag`(`year`,`page`,`isScanned`)VALUES(%d,0,0);" % x)
 
