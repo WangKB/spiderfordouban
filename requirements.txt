@@ -1,0 +1,4 @@
+lxml==3.7.3
+mysql-connector==2.1.4
+requests==2.13.0
+SQLAlchemy==1.1.5
