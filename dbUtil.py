@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 
 username = 'root'
 password = 'wkb19910825'
-host = 'localhost'
+host = '120.24.19.237'
 port = '3306'
 schema = 'douban'
 engine = create_engine("mysql+mysqlconnector://%s:%s@%s:%s/%s" % (username, password, host, port, schema))

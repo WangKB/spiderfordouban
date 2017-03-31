@@ -93,3 +93,16 @@ class Task(Base):
 
     def __repr__(self):
         return '(Task: %d, %s)' % (self.id, self.url)
+
+
+class Proxy(Base):
+
+    __tablename__ = 'proxy'
+
+    id = Column(Integer, primary_key=True)
+    ip = Column(String(255))
+    port = Column(String(255))
+    status = Column(String(255))
+
+    def __repr__(self):
+        return '(Proxy: %d, %s)' % (self.id, self.ip)

@@ -1,5 +1,5 @@
 from dbUtil import DBSession
-from entity import YearTag, Task, Celebrity, Subject
+from entity import YearTag, Task, Celebrity, Subject, Proxy
 from httpUtil import get_html, get_inner_text, get_tail, get_attr, bea_celebrity_info
 from sfdblog import logger
 
@@ -202,9 +202,30 @@ def main():
     # task_to_subject(task)
     # session.add(built_celebrity_by_id("1363486"))
     # session.commit()
-    built_all_subjects()
+    # built_all_subjects()
     # for x in range(1890 , 2020):
     #     print("INSERT INTO `douban`.`year_tag`(`year`,`page`,`isScanned`)VALUES(%d,0,0);" % x)
+    # html = get_html("http://www.proxy360.cn/Region/Taiwan")
+    # proxies = html.xpath('//div[@style="float:left; display:block; width:630px;"]')
+    # session = DBSession()
+    # for proxy in proxies:
+    #     proxy_b = Proxy(
+    #         ip=proxy.xpath('./span')[0].text.strip(),
+    #         port=proxy.xpath('./span')[1].text.strip(),
+    #         status="unUsed"
+    #     )
+    #     session.add(proxy_b)
+    #     session.commit()
+    # session.close()
+    # session = DBSession()
+    # for proxy in session.query(Proxy).all():
+    #     pstr = 'http://113.121.246.193:808'
+    proxies = {
+        'http': 'http://115.215.49.245:37746',
+        'https': 'http://115.215.49.245:37746'
+    }
+    html = get_html("https://movie.douban.com/subject/26602933/?from=showing", proxies)
+    # session.close()
 
 if __name__ == "__main__":
     main()
