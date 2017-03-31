@@ -10,21 +10,14 @@ def get_html(url, proxies=None):
     #     'http': 'http://77.73.66.26:8080',
     #     'https': 'http://77.73.66.26:8080'
     # }
-    print("http:"+proxies['http'])
-    print("https:" + proxies['https'])
+    sleep(2)
     headers = {
         'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
             'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36'
     }
-    try:
-        response = get(url,  headers=headers, proxies=proxies)
-    except Exception as e:
-        print("error")
-        return
+    response = get(url,  headers=headers, proxies=proxies)
     html = response.content
-    print(str(response.status_code)+":"+proxies["http"])
-    print(html.decode('utf-8'))
     return etree.HTML(html.decode('utf-8'))
 
 
