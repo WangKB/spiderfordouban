@@ -6,6 +6,8 @@ from sfdblog import logger
 
 # 根据id获得影人（若该id数据库内不存在则创建该影人）
 def get_or_create_celebrity(c_id):
+    if c_id == "serach":
+        return
     try:
         session = DBSession()
         celebrity = session.query(Celebrity).filter(Celebrity.id == c_id).first()
@@ -68,6 +70,10 @@ def task_to_subject(task):
         session.commit()
 
         html = get_html(task.url)
+        if get_inner_text(html, '//span[@class="year"]/text()') is not None:
+            year = get_inner_text(html, '//span[@class="year"]/text()').replace("(", "").replace(")", "")
+        else:
+            year = None
         subject = Subject(
             id=task.url.split("/")[-2],
             title=get_inner_text(html, '//span[@property="v:itemreviewed"]/text()'),
@@ -99,19 +105,26 @@ def task_to_subject(task):
         session.add(subject)
         session.commit()
         for href in html.xpath('//a[@rel="v:directedBy"]/@href'):
-            get_or_create_celebrity(str(href).split("/")[-2])
-            subject.directors.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
-            session.commit()
+            c_id = str(href).split("/")[-2];
+            if c_id != "search":
+                get_or_create_celebrity(c_id)
+                subject.directors.append(session.query(Celebrity).filter(Celebrity.id == c_id).first())
+                session.commit()
 
         for href in html.xpath('//a[@rel="v:starring"]/@href'):
-            get_or_create_celebrity(str(href).split("/")[-2])
-            subject.actors.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
-            session.commit()
+            c_id = str(href).split("/")[-2];
+            if c_id != "search":
+                get_or_create_celebrity(c_id)
+                subject.actors.append(session.query(Celebrity).filter(Celebrity.id == c_id).first())
+                session.commit()
 
-        for href in html.xpath('//span[@class="pl"][text()="编剧"]')[0].getnext().xpath('a/@href'):
-            get_or_create_celebrity(str(href).split("/")[-2])
-            subject.screenwriters.append(session.query(Celebrity).filter(Celebrity.id == str(href).split("/")[-2]).first())
-            session.commit()
+        if len(html.xpath('//span[@class="pl"][text()="编剧"]')) == 1:
+            for href in html.xpath('//span[@class="pl"][text()="编剧"]')[0].getnext().xpath('a/@href'):
+                c_id = str(href).split("/")[-2];
+                if c_id != "search":
+                    get_or_create_celebrity(c_id)
+                    subject.screenwriters.append(session.query(Celebrity).filter(Celebrity.id == c_id).first())
+                    session.commit()
 
         session.close()
     except Exception as e:
@@ -172,7 +185,10 @@ def built_all_tasks():
 def built_all_subjects():
     session = DBSession()
     for task in session.query(Task).filter(Task.isScanned.is_(False)).all():
-        task_to_subject(task)
+        try:
+            task_to_subject(task)
+        except Exception as e:
+            pass
     session.close()
 
 

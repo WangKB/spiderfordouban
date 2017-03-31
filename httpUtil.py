@@ -17,7 +17,6 @@ def get_html(url):
             'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36'
     }
     html = get(url,  headers=headers).content
-    print(html)
     return etree.HTML(html.decode('utf-8'))
 
 
