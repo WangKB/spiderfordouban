@@ -3,6 +3,7 @@ from entity import YearTag, Task, Celebrity, Subject, Proxy
 from httpUtil import get_html, get_inner_text, get_tail, get_attr, bea_celebrity_info
 from sfdblog import logger
 from sqlalchemy.sql import and_
+import jieba
 
 
 # 根据id获得影人（若该id数据库内不存在则创建该影人）
@@ -61,7 +62,9 @@ def built_celebrity_by_id(c_id):
 
 
 def task_to_subject(task):
+    logger.debug("task_to_subject:begin,task:"+str(task))
     try:
+        logger.debug("task_to_subject:session got")
         session = DBSession()
         year_task_in_session = session.query(Task).filter(Task.id == task.id).first()
         if session.query(Subject).filter(Subject.id == task.url.split("/")[-2]).first() is not None:
@@ -88,7 +91,7 @@ def task_to_subject(task):
             periods=get_tail(html, '//span[@class="pl"][text()="集数:"]'),
             period_duration=get_tail(html, '//span[@class="pl"][text()="单集片长:"]'),
             photo=get_attr(html, '//img[@rel="v:image"][@title="点击看更多海报"]/@src'),
-            year=get_inner_text(html, '//span[@class="year"]/text()').replace("(", "").replace(")", "")
+            year=year
         )
     # logger.info("标题：" + get_inner_text(html, '//span[@property="v:itemreviewed"]/text()'))
     # logger.info("评分：" + get_inner_text(html, '//strong[@property="v:average"]/text()'))
@@ -141,11 +144,10 @@ def built_tasks_by_url(url):
         html = get_html(url)
         subjects = html.xpath('//tr[@class="item"]/td/a[@class="nbg"]/@href')
         for subject in subjects:
-            if session.query(Task).filter(Task.url == url).first() is not None:
-                pass
-            task = Task(url=str(subject), isScanned=False)
-            session.add(task)
-            session.commit()
+            if session.query(Task).filter(Task.url == url).first() is None:
+                task = Task(url=str(subject), isScanned=False)
+                session.add(task)
+                session.commit()
     except Exception as e:
         logger.exception("built_tasks_by_url has exception:url:"+url)
         raise
@@ -154,16 +156,17 @@ def built_tasks_by_url(url):
 
 
 def built_tasks_by_tag(year_tag):
+    logger.debug("built_tasks_by_tag:begin;year_tag:"+str(year_tag))
     try:
         session = DBSession()
         year_tag_in_session = session.query(YearTag).filter(YearTag.id == year_tag.id).first()
         year_tag_in_session.isScanned = True
         session.commit()
-        html = get_html("https://movie.douban.com/tag/%s?start=0&type=R" % year_tag.year)
+        html = get_html("https://movie.douban.com/tag/%s?start=0&type=T" % year_tag.year)
         pages = html.xpath('//div[@class="paginator"]/a')
         max_page = 1 if len(pages) == 0 else int(pages[-1].text.strip())
         for x in range(year_tag_in_session.page, max_page):
-            url = "https://movie.douban.com/tag/%s?start=%d&type=R" % (year_tag.year, x * 20)
+            url = "https://movie.douban.com/tag/%s?start=%d&type=T" % (year_tag.year, x * 20)
             built_tasks_by_url(url)
             year_tag_in_session.page = x
             session.commit()
@@ -177,6 +180,7 @@ def built_tasks_by_tag(year_tag):
 
 
 def built_all_tasks():
+    logger.debug("built_all_tasks:begin")
     session = DBSession()
     for year_tag in session.query(YearTag).filter(YearTag.isScanned.is_(False)).all():
         built_tasks_by_tag(year_tag)
@@ -184,50 +188,21 @@ def built_all_tasks():
 
 
 def built_all_subjects():
+    logger.debug("built_all_subjects:begin")
     session = DBSession()
-    for task in session.query(Task).filter(and_(Task.isScanned.is_(False), Task.id < 44000, Task.id > 27999)).all():
-    # for task in session.query(Task).filter(and_(Task.isScanned.is_(False), Task.id > 43999)).all():
+    logger.debug("built_all_subjects:session got")
+    for task in session.query(Task).filter(and_(Task.isScanned.is_(False))).all():
         try:
+            logger.debug("built_all_subjects:"+str(task))
             task_to_subject(task)
         except Exception as e:
-            pass
+            logger.error(e)
     session.close()
 
 
 def main():
-    # built_all_tasks()
-    # session = DBSession()
-    # task = Task(url="https://movie.douban.com/subject/25921812/", isScanned=False)
-    # session.add(task)
-    # session.commit()
-    # session.close()
-    # task_to_subject(task)
-    # session.add(built_celebrity_by_id("1363486"))
-    # session.commit()
-    built_all_subjects()
-    # for x in range(1890 , 2020):
-    #     print("INSERT INTO `douban`.`year_tag`(`year`,`page`,`isScanned`)VALUES(%d,0,0);" % x)
-    # html = get_html("http://www.proxy360.cn/Region/Taiwan")
-    # proxies = html.xpath('//div[@style="float:left; display:block; width:630px;"]')
-    # session = DBSession()
-    # for proxy in proxies:
-    #     proxy_b = Proxy(
-    #         ip=proxy.xpath('./span')[0].text.strip(),
-    #         port=proxy.xpath('./span')[1].text.strip(),
-    #         status="unUsed"
-    #     )
-    #     session.add(proxy_b)
-    #     session.commit()
-    # session.close()
-    # session = DBSession()
-    # for proxy in session.query(Proxy).all():
-    #     pstr = 'http://113.121.246.193:808'
-    # proxies = {
-    #     'http': 'http://115.215.49.245:37746',
-    #     'https': 'http://115.215.49.245:37746'
-    # }
-    # html = get_html("https://movie.douban.com/subject/26602933/?from=showing", proxies)
-    # session.close()
+    built_all_tasks()
+
 
 if __name__ == "__main__":
     main()
