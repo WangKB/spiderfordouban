@@ -144,7 +144,7 @@ def built_tasks_by_url(url):
         html = get_html(url)
         subjects = html.xpath('//tr[@class="item"]/td/a[@class="nbg"]/@href')
         for subject in subjects:
-            if session.query(Task).filter(Task.url == url).first() is None:
+            if session.query(Task).filter(Task.url == str(subject)).first() is None:
                 task = Task(url=str(subject), isScanned=False)
                 session.add(task)
                 session.commit()
