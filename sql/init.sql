@@ -131,7 +131,7 @@ CREATE TABLE `subject` (
   `rating_num` float DEFAULT NULL,
   `rating_people` int(11) DEFAULT NULL,
   `periods` int(11) DEFAULT NULL,
-  `period_duration` float DEFAULT NULL,
+  `period_duration` varchar(255) DEFAULT NULL,
   `photo` varchar(2000) DEFAULT NULL,
   `year` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
