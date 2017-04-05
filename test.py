@@ -3,7 +3,6 @@ from entity import YearTag, Task, Celebrity, Subject, Proxy
 from httpUtil import get_html, get_inner_text, get_tail, get_attr, bea_celebrity_info
 from sfdblog import logger
 from sqlalchemy.sql import and_
-import jieba
 
 
 # 根据id获得影人（若该id数据库内不存在则创建该影人）
@@ -62,16 +61,18 @@ def built_celebrity_by_id(c_id):
 
 
 def task_to_subject(task):
-    logger.debug("task_to_subject:begin,task:"+str(task))
+    logger.debug("======task_to_subject:begin,task:"+str(task))
     try:
         logger.debug("task_to_subject:session got")
         session = DBSession()
         year_task_in_session = session.query(Task).filter(Task.id == task.id).first()
-        if session.query(Subject).filter(Subject.id == task.url.split("/")[-2]).first() is not None:
-            session.close()
-            return
         year_task_in_session.isScanned = True
         session.commit()
+        if session.query(Subject).filter(Subject.id == task.url.split("/")[-2]).first() is not None:
+            logger.debug("task_to_subject:subject(%s) is already in table" % Subject.id )
+            session.close()
+            return
+
 
         html = get_html(task.url)
         if get_inner_text(html, '//span[@class="year"]/text()') is not None:
@@ -131,6 +132,7 @@ def task_to_subject(task):
                     session.commit()
 
         session.close()
+        logger.debug("======task_to_subject:end,task:" + str(task))
     except Exception as e:
         logger.exception("task_to_subject has exception:task:"+task.url)
 
