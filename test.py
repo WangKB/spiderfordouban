@@ -42,22 +42,6 @@ def built_celebrity_by_id(c_id):
     except Exception as e:
         logger.exception("built_celebrity_by_id has exception:c_id:"+c_id)
         raise
-    # logger.info("星座：" +
-    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="星座"]')))
-    # logger.info("出生日期：" +
-    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="出生日期"]')))
-    # logger.info("出生地：" +
-    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="出生地"]')))
-    # logger.info("职业：" +
-    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="职业"]')))
-    # logger.info("更多外文名：" +
-    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="更多外文名"]')))
-    # logger.info("名字：" +
-    #             get_inner_text(html, '//div[@id="content"]/h1/text()'))
-    # logger.info("性别：" +
-    #             bea_celebrity_info(get_tail(html, '//div[@id="headline"]/div[@class="info"]//span[text()="性别"]')))
-    # logger.info("图片：" +
-    #             get_attr(html, '//div[@id="headline"]/div[@class="pic"]//img/@src'))
 
 
 def task_to_subject(task):
@@ -69,7 +53,7 @@ def task_to_subject(task):
         year_task_in_session.isScanned = True
         session.commit()
         if session.query(Subject).filter(Subject.id == task.url.split("/")[-2]).first() is not None:
-            logger.debug("task_to_subject:subject(%s) is already in table" % Subject.id )
+            logger.debug("task_to_subject:subject(%s) is already in table" % task.url.split("/")[-2])
             session.close()
             return
 
@@ -94,19 +78,6 @@ def task_to_subject(task):
             photo=get_attr(html, '//img[@rel="v:image"][@title="点击看更多海报"]/@src'),
             year=year
         )
-    # logger.info("标题：" + get_inner_text(html, '//span[@property="v:itemreviewed"]/text()'))
-    # logger.info("评分：" + get_inner_text(html, '//strong[@property="v:average"]/text()'))
-    # logger.info("评价人数：" + get_inner_text(html, '//span[@property="v:votes"]/text()'))
-    # logger.info("类型：" + "/".join(html.xpath('//span[@property="v:genre"]/text()')))
-    # logger.info("制片国家/地区：" + get_tail(html, '//span[@class="pl"][text()="制片国家/地区:"]'))
-    # logger.info("语言:" + get_tail(html, '//span[@class="pl"][text()="语言:"]'))
-    # logger.info("年份:" + get_inner_text(html, '//span[@class="year"]/text()').replace("(", "").replace(")", ""))
-    # logger.info("上映时间：" + "/".join(html.xpath('//span[@property="v:initialReleaseDate"]/text()')))
-    # logger.info("片长:" + get_attr(html, '//span[@property="v:runtime"]/@content'))
-    # logger.info("海报:" + get_attr(html, '//img[@rel="v:image"][@title="点击看更多海报"]/@src'))
-    # logger.info("集数：" + get_tail(html, '//span[@class="pl"][text()="集数:"]'))
-    # logger.info("单集片长:" + get_tail(html, '//span[@class="pl"][text()="单集片长:"]'))
-
         session.add(subject)
         session.commit()
         for href in html.xpath('//a[@rel="v:directedBy"]/@href'):
@@ -203,7 +174,7 @@ def built_all_subjects():
 
 
 def main():
-    built_all_tasks()
+    built_all_subjects()
 
 
 if __name__ == "__main__":
